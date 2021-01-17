@@ -1,6 +1,8 @@
 #ifndef MAINAPP_H
 #define MAINAPP_H
 
+#include "user.h"
+#include <vector>
 #include <QDialog>
 
 namespace Ui {
@@ -14,7 +16,7 @@ class mainApp : public QDialog
 public:
     explicit mainApp(QWidget *parent = nullptr);
     ~mainApp();
-    void updateProducts(int index);
+    void updateProducts(int index, bool ctl, vector<product> pr);
 
 private slots:
     void on_add_clicked();
@@ -25,11 +27,19 @@ private slots:
 
     void on_delete_2_clicked();
 
+    void on_deposit_clicked();
+
+    void on_pushButton_clicked();
+
+    void on_search_clicked();
+
+    void on_logout_clicked();
+
 private:
     Ui::mainApp *ui;
-    int index;
-    int indUser;
-    int indProd;
+    vector<product> inSearch;
+    int indexUSR;
+    int indexDB;
 };
 
 #endif // MAINAPP_H

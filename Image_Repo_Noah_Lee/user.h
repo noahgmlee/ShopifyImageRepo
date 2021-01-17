@@ -7,7 +7,9 @@
 
 #include <string>
 #include <vector>
-
+#include <iomanip>
+#include <sstream>
+#pragma once
 using namespace std;
 
 struct product {
@@ -29,13 +31,21 @@ public:
     void deposit(float amount);
     void search(string descriptors);
     string getName(){ return this->username; }
+    string getBalance(){
+        stringstream bal;
+        bal << std::fixed << setprecision(2) << balance;
+        return bal.str();
+    }
 private:
     string username;
     string pword;
-    vector<product> products;
     float balance;
     vector<string> userInfo;
 };
+
+void initiate();
+void initiate2();
+void save();
 
 extern vector<product> DB;
 extern vector<string> userSave;

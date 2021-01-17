@@ -6,7 +6,10 @@
  */
 
 #include "user.h"
-
+#include <QApplication>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -51,40 +54,113 @@ void User :: addProduct(string fileName, string nm, string descriptors, float pr
     temp.descriptors = descriptors;
     temp.User = this->username;
     temp.price = price;
-    this->products.push_back(temp);
     DB.push_back(temp);
+    save();
 }
 
 void User :: deleteProduct(string prodName){
-    for (int i = 0; i < products.size(); i++){
-        if (prodName == this->products.at(i).name){
-            products.erase(products.begin() + i);
-            for (int i = 0; i < DB.size(); i++){
-                if (prodName == DB.at(i).name && this->username == DB.at(i).User){
-                    DB.erase(DB.begin() + i);
-                }
-            }
+    for (int i = 0; i < DB.size(); i++){
+        if (prodName == DB.at(i).name && this->username == DB.at(i).User){
+            DB.erase(DB.begin() + i);
         }
     }
+    save();
 }
 
 void User :: purchaseProduct(string prodName){
+    string seller;
+    float price;
     for (int i = 0; i < DB.size(); i++){
         if (prodName == DB.at(i).name){
+            seller = DB.at(i).User;
+            price = DB.at(i).price;
             DB.at(i).User = this->username;
-            this->products.push_back(DB.at(i));
+            this->balance -= price;
         }
     }
+    for (int i = 0; i < userSave.size(); i++){
+        if (userSave.at(i) == seller){
+            float currbalance = stof(userSave.at(i+2));
+            currbalance += price;
+            stringstream temp;
+            temp << std::fixed << setprecision(2) << currbalance;
+            string toSave = temp.str();
+            userSave.at(i + 2) = toSave;
+        }
+        else if (userSave.at(i) == this->username){
+            stringstream temp;
+            temp << std::fixed << setprecision(2) << this->balance;
+            string toSave = temp.str();
+            userSave.at(i + 2) = toSave;
+        }
+    }
+    save();
 }
 
 void User :: deposit(float amount){
     this->balance += amount;
     for (int i = 0; i < userSave.size(); i++){
-        if (userSave.at(i) == this->pword){
+        if (userSave.at(i) == this->username){
             stringstream temp;
             temp << std::fixed << setprecision(2) << this->balance;
             string toSave = temp.str();
-            userSave.at(i + 1) = toSave;
+            userSave.at(i + 2) = toSave;
         }
     }
+    save();
+}
+
+void initiate() {
+    string line;
+    QFile saveUsers(QCoreApplication::applicationDirPath() + "/../../../users.txt");
+    saveUsers.open(QIODevice::ReadOnly);
+    QTextStream user(&saveUsers);
+    while (!user.atEnd())
+    {
+       QString line = user.readLine();
+       userSave.push_back(line.toStdString());
+    }
+    saveUsers.close();
+    QFile saveData(QCoreApplication::applicationDirPath() + "/../../../data.txt");
+    saveData.open(QIODevice::ReadOnly);
+    QTextStream data(&saveData);
+    product temp;
+    while (!data.atEnd()){
+        QString line = data.readLine();
+        QStringList list = line.split(" ");
+        if (list.size() < 4){
+            break;
+        }
+        temp.User = list.at(0).toStdString();
+        temp.name = list.at(1).toStdString();
+        temp.price = stof(list.at(2).toStdString());
+        temp.imageFile = list.at(3).toStdString();
+        temp.descriptors = list.at(4).toStdString();
+        DB.push_back(temp);
+    }
+    saveData.close();
+}
+
+void save() {
+    QFile saveUsers(QCoreApplication::applicationDirPath() + "/../../../users.txt");
+    saveUsers.open(QIODevice::WriteOnly);
+    QTextStream user(&saveUsers);
+    for (int i = 0; i < userSave.size(); i++){
+        user << QString::fromStdString(userSave.at(i)) << endl;
+    }
+    saveUsers.close();
+
+    QFile saveData(QCoreApplication::applicationDirPath() + "/../../../data.txt");
+    saveData.open(QIODevice::WriteOnly);
+    QTextStream data(&saveData);
+    for (product p : DB){
+        stringstream price;
+        price << std::fixed << setprecision(2) << p.price;
+        string cost = price.str();
+        data << QString::fromStdString(p.User + " ") <<
+                QString::fromStdString(p.name + " ") <<
+                QString::fromStdString(cost) << " " + QString::fromStdString(p.imageFile) << " " +
+                QString::fromStdString(p.descriptors) << endl;
+    }
+    saveData.close();
 }
